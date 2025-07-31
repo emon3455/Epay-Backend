@@ -114,7 +114,7 @@ export const WalletService = {
   },
 
   blockWallet: async (userId: string) => {
-    const wallet = await Wallet.findOne({ user: userId });
+    const wallet = await Wallet.findOne({ user: userId }).populate("user");
     if (!wallet) throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
 
     wallet.isActive =

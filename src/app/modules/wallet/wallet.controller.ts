@@ -4,6 +4,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status-codes";
 import { WalletService } from "./wallet.service";
 import { JwtPayload } from "jsonwebtoken";
+import { IsActive } from "../user/user.interface";
 
 export const WalletController = {
 
@@ -115,10 +116,11 @@ export const WalletController = {
 
   blockWallet: catchAsync(async (req: Request, res: Response) => {
     const result = await WalletService.blockWallet(req.params.userId);
+    
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
-      message: "Wallet blocked/unblocked",
+      message: `Wallet Successfully ${result.isActive === IsActive.ACTIVE ? "Activated" : result.isActive}`,
       data: result,
     });
   }),

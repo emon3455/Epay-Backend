@@ -8,12 +8,12 @@ import { addMoneyZodSchema, agentCashZodSchema, sendMoneyZodSchema, withdrawMone
 const router = Router();
 
 // USER & AGENT
-router.get("/me", checkAuth(Role.USER, Role.AGENT), WalletController.getMyWallet);
+router.get("/me/:id", checkAuth(Role.USER, Role.AGENT), WalletController.getMyWallet);
 
 // USER
-router.post("/add", checkAuth(Role.USER), validateRequest(addMoneyZodSchema), WalletController.addMoney);
-router.post("/withdraw", checkAuth(Role.USER), validateRequest(withdrawMoneyZodSchema), WalletController.withdrawMoney);
-router.post("/send", checkAuth(Role.USER), validateRequest(sendMoneyZodSchema), WalletController.sendMoney);
+router.post("/add-money", checkAuth(Role.USER), validateRequest(addMoneyZodSchema), WalletController.addMoney);
+router.post("/withdraw-money", checkAuth(Role.USER), validateRequest(withdrawMoneyZodSchema), WalletController.withdrawMoney);
+router.post("/send-money", checkAuth(Role.USER), validateRequest(sendMoneyZodSchema), WalletController.sendMoney);
 
 // AGENT
 router.post("/cash-in", checkAuth(Role.AGENT), validateRequest(agentCashZodSchema), WalletController.agentCashIn);
