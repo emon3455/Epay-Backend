@@ -4,12 +4,12 @@ import httpStatus from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
 import AppError from "../../errorHelpers/AppError";
-import { IAuthProvider, IUser } from "./user.interface";
+import { IAuthProvider, IsActive, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import { Wallet } from "../wallet/wallet.model";
 
 const createUser = async (payload: Partial<IUser>) => {
-  const { email, password, ...rest } = payload;
+  const { email, password, role = Role.USER, ...rest } = payload;
 
   const isUserExist = await User.findOne({ email });
 
@@ -27,14 +27,17 @@ const createUser = async (payload: Partial<IUser>) => {
     providerId: email as string,
   };
 
+  const isActive = role === Role.AGENT ? IsActive.PENDING : IsActive.ACTIVE;
+
   const user = await User.create({
     email,
     password: hashedPassword,
     auths: [authProvider],
+    role,
+    isActive,
     ...rest,
   });
-
-  // Automatically create wallet
+    
   await Wallet.create({
     user: user._id,
     balance: 50,
@@ -48,6 +51,7 @@ const updateUser = async (
   payload: Partial<IUser>,
   decodedToken: JwtPayload
 ) => {
+  
   const ifUserExist = await User.findById(userId);
 
   if (!ifUserExist) {

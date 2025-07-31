@@ -27,7 +27,6 @@ const credentialsLogin = catchAsync(async (req: Request, res: Response, next: Ne
 
         const userTokens = await createUserTokens(user)
 
-        // eslint-disable-next-line no-unused-vars
         const { password: pass, ...rest } = user.toObject()
 
 

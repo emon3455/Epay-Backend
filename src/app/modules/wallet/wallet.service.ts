@@ -6,6 +6,9 @@ import { User } from "../user/user.model";
 import mongoose from "mongoose";
 import { IsActive } from "../user/user.interface";
 import { JwtPayload } from "jsonwebtoken";
+import { TransactionService } from "../transaction/transaction.service";
+import { TransactionType } from "../transaction/transaction.interface";
+import { ensureAgentIsApproved } from "../../helpers/ensureAgentIsApproved";
 
 const getMyWallet = async (userId: string) => {
   const wallet = await Wallet.findOne({ user: userId }).populate("user");
@@ -24,6 +27,12 @@ const addMoney = async (decodedToken: JwtPayload, amount: number) => {
   );
   if (!wallet) throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
 
+  await TransactionService.createTransaction({
+    type: TransactionType.ADDMONEY,
+    amount,
+    receiver: wallet.user,
+  });
+
   return wallet;
 };
 
@@ -40,6 +49,13 @@ const withdrawMoney = async (decodedToken: JwtPayload, amount: number) => {
 
   wallet.balance! -= amount;
   await wallet.save();
+
+  await TransactionService.createTransaction({
+    type: TransactionType.WITHDRAWMONEY,
+    amount,
+    sender: wallet?.user?._id,
+  });
+
   return wallet;
 };
 
@@ -72,6 +88,13 @@ const sendMoney = async (
     await senderWallet.save({ session });
     await receiverWallet.save({ session });
 
+    await TransactionService.createTransaction({
+      type: TransactionType.SENDMONEY,
+      amount,
+      sender: decodedToken.userId,
+      receiver: receiverUser?._id,
+    });
+
     await session.commitTransaction();
     return { senderWallet, receiverWallet };
   } catch (err) {
@@ -87,6 +110,10 @@ const agentCashIn = async (
   userId: string,
   amount: number
 ) => {
+  
+  const user = await User.findById(decodedToken.userId);
+  ensureAgentIsApproved(user!);
+
   if (amount <= 0)
     throw new AppError(httpStatus.BAD_REQUEST, "Amount must be greater then 0");
 
@@ -97,6 +124,13 @@ const agentCashIn = async (
   );
   if (!wallet) throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
 
+  await TransactionService.createTransaction({
+    type: TransactionType.CASHIN,
+    amount,
+    agent: decodedToken.userId,
+    receiver: wallet.user,
+  });
+
   return wallet;
 };
 
@@ -105,6 +139,10 @@ const agentCashOut = async (
   userId: string,
   amount: number
 ) => {
+
+  const user = await User.findById(decodedToken.userId);
+  ensureAgentIsApproved(user!);
+
   if (amount <= 0)
     throw new AppError(httpStatus.BAD_REQUEST, "Amount must be greater then 0");
 
@@ -115,6 +153,14 @@ const agentCashOut = async (
 
   wallet.balance! -= amount;
   await wallet.save();
+
+  await TransactionService.createTransaction({
+    type: TransactionType.CASHOUT,
+    amount,
+    agent: decodedToken.userId,
+    sender: wallet.user,
+  });
+
   return wallet;
 };
 

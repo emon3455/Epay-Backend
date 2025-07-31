@@ -16,7 +16,8 @@ export interface IAuthProvider {
 export enum IsActive {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE",
-    BLOCKED = "BLOCKED"
+    BLOCKED = "BLOCKED",
+    PENDING = "PENDING",
 }
 
 export interface IUser {
