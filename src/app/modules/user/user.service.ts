@@ -73,8 +73,37 @@ const updateUser = async (
   return newUpdatedUser;
 };
 
+const approveRejectAgent = async (
+  userId: string,
+  payload: Partial<IUser>,
+  decodedToken: JwtPayload
+) => {
+  
+  const agent = await User.findById(userId);
+
+  if (!agent) {
+    throw new AppError(httpStatus.NOT_FOUND, "Agent Not Found");
+  }
+
+  agent.isActive =
+    agent.isActive === IsActive.BLOCKED ? IsActive.ACTIVE : IsActive.BLOCKED;
+
+  await agent.save();
+  return agent;
+};
+
 const getAllUsers = async () => {
-  const users = await User.find({});
+  const users = await User.find({role:Role.USER});
+  const totalUsers = await User.countDocuments();
+  return {
+    data: users,
+    meta: {
+      total: totalUsers,
+    },
+  };
+};
+const getAllAgent = async () => {
+  const users = await User.find({role:Role.AGENT});
   const totalUsers = await User.countDocuments();
   return {
     data: users,
@@ -88,4 +117,6 @@ export const UserServices = {
   createUser,
   getAllUsers,
   updateUser,
+  getAllAgent,
+  approveRejectAgent
 };

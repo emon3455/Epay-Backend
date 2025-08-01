@@ -13,10 +13,21 @@ router.get(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   UserControllers.getAllUsers
 );
+router.get(
+  "/all-agent",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  UserControllers.getAllAgent
+);
 router.patch(
   "/:id",
   validateRequest(updateUserZodSchema),
-  checkAuth(...Object.values(Role)),
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   UserControllers.updateUser
+);
+router.patch(
+  "agent/approve-reject/:id",
+  validateRequest(updateUserZodSchema),
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  UserControllers.approveRejectAgent
 );
 export const UserRoutes = router;

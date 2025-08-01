@@ -25,8 +25,24 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
 
     sendResponse(res, {
         success: true,
-        statusCode: httpStatus.CREATED,
+        statusCode: httpStatus.OK,
         message: "User Updated Successfully",
+        data: user,
+    })
+})
+
+const approveRejectAgent = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.params.id;
+
+    const verifiedToken = req.user;
+
+    const payload = req.body;
+    const user = await UserServices.approveRejectAgent(userId, payload, verifiedToken as JwtPayload)
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Agent Updated Successfully",
         data: user,
     })
 })
@@ -41,10 +57,22 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
         meta: result.meta
     })
 })
+const getAllAgent = catchAsync(async (req: Request, res: Response) => {
+    const result = await UserServices.getAllAgent();
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "All Agent Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
+    })
+})
 
 
 export const UserControllers = {
     createUser,
     getAllUsers,
-    updateUser
+    updateUser,
+    getAllAgent,
+    approveRejectAgent
 }
