@@ -13,8 +13,8 @@ import { commissionRates } from "../../config/systemConfig";
 import { logNotification } from "../../utils/logNotification";
 import { getSystemWallet } from "../../utils/getSystemWallet";
 
-const getMyWallet = async (userId: string) => {
-  const wallet = await Wallet.findOne({ user: userId }).populate("user");
+const getMyWallet = async (decodedToken: JwtPayload) => {
+  const wallet = await Wallet.findOne({ user: decodedToken?.userId }).populate("user");
   if (!wallet) throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
   return wallet;
 };
@@ -290,8 +290,9 @@ const getAllWallets = async () => {
   return await Wallet.find().populate("user");
 };
 
-const blockWallet = async (userId: string) => {
-  const wallet = await Wallet.findOne({ user: userId }).populate("user");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const blockWallet = async (id: any) => {
+  const wallet = await Wallet.findById({ id: id }).populate("user");
   if (!wallet) throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
 
   wallet.isActive =

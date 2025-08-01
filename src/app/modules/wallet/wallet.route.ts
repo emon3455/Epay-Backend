@@ -8,7 +8,7 @@ import { addMoneyZodSchema, agentCashZodSchema, sendMoneyZodSchema, withdrawMone
 const router = Router();
 
 // USER & AGENT
-router.get("/me/:id", checkAuth(Role.USER, Role.AGENT), WalletController.getMyWallet);
+router.get("/me", checkAuth(Role.USER, Role.AGENT), WalletController.getMyWallet);
 
 // USER
 router.post("/add-money", checkAuth(Role.USER), validateRequest(addMoneyZodSchema), WalletController.addMoney);
@@ -21,6 +21,6 @@ router.post("/cash-out", checkAuth(Role.AGENT), validateRequest(agentCashZodSche
 
 // ADMIN
 router.get("/admin/all", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), WalletController.getAllWallets);
-router.patch("/admin/block/:userId", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), WalletController.blockWallet);
+router.patch("/admin/block/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), WalletController.blockWallet);
 
 export const WalletRoutes = router;

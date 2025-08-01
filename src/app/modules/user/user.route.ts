@@ -9,7 +9,7 @@ const router = Router();
 
 router.post("/register",validateRequest(createUserZodSchema), UserControllers.createUser);
 router.get(
-  "/all-users",
+  "/all-user",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   UserControllers.getAllUsers
 );
@@ -25,8 +25,7 @@ router.patch(
   UserControllers.updateUser
 );
 router.patch(
-  "agent/approve-reject/:id",
-  validateRequest(updateUserZodSchema),
+  "/agent/approve-reject/:id",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   UserControllers.approveRejectAgent
 );

@@ -85,8 +85,7 @@ const approveRejectAgent = async (
     throw new AppError(httpStatus.NOT_FOUND, "Agent Not Found");
   }
 
-  agent.isActive =
-    agent.isActive === IsActive.BLOCKED ? IsActive.ACTIVE : IsActive.BLOCKED;
+  agent.isActive = payload.isActive;
 
   await agent.save();
   return agent;
@@ -94,7 +93,7 @@ const approveRejectAgent = async (
 
 const getAllUsers = async () => {
   const users = await User.find({role:Role.USER});
-  const totalUsers = await User.countDocuments();
+  const totalUsers = users?.length;
   return {
     data: users,
     meta: {
@@ -102,13 +101,14 @@ const getAllUsers = async () => {
     },
   };
 };
+
 const getAllAgent = async () => {
-  const users = await User.find({role:Role.AGENT});
-  const totalUsers = await User.countDocuments();
+  const agent = await User.find({role:Role.AGENT});
+  const totalAgent = agent?.length;
   return {
-    data: users,
+    data: agent,
     meta: {
-      total: totalUsers,
+      total: totalAgent,
     },
   };
 };

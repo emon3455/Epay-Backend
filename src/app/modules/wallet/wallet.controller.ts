@@ -7,9 +7,9 @@ import { JwtPayload } from "jsonwebtoken";
 import { IsActive } from "../user/user.interface";
 
 const getMyWallet = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.params.id;
+  const verifiedToken = req.user;
 
-  const result = await WalletService.getMyWallet(userId);
+  const result = await WalletService.getMyWallet(verifiedToken as JwtPayload);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -113,7 +113,7 @@ const getAllWallets = catchAsync(async (_req: Request, res: Response) => {
 });
 
 const blockWallet = catchAsync(async (req: Request, res: Response) => {
-  const result = await WalletService.blockWallet(req.params.userId);
+  const result = await WalletService.blockWallet(req.params.id);
 
   sendResponse(res, {
     success: true,
