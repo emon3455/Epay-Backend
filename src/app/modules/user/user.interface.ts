@@ -36,5 +36,5 @@ export interface IUser {
     auths: IAuthProvider[];
 
     // Agent-specific:
-    commissionRate: number;
+    commissionRate?: number;
 }
