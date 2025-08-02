@@ -33,10 +33,10 @@ const getAllTransactions = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAgentCommission = catchAsync(async (req: Request, res: Response) => {
-  const verifiedToken = req.user as JwtPayload;
+  const agentId = req.query.id as string;
 
   const result = await TransactionService.getAgentCommission(
-    verifiedToken,
+    agentId,
     req.query as Record<string, string>
   );
 

@@ -39,10 +39,10 @@ const getAllTransactions = async (
 };
 
 const getAgentCommission = async (
-  decodedToken: JwtPayload,
+  agentId: string,
   query: Record<string, string>
 ): Promise<IGenericResponse<ITransaction[]> & { totalCommission: number }> => {
-  const modifiedQuery = { ...query, agent: decodedToken.userId };
+  const modifiedQuery = { ...query, agent: agentId };
   const baseQuery = Transaction.find();
 
   const queryBuilder = new QueryBuilder(baseQuery, modifiedQuery)

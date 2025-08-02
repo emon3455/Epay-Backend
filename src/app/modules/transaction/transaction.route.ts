@@ -11,7 +11,7 @@ router.get("/me", checkAuth(Role.USER, Role.AGENT), TransactionController.getMyT
 // ADMIN
 router.get("/admin/all", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), TransactionController.getAllTransactions);
 
-// AGENT
-router.get("/agent/commission", checkAuth(Role.AGENT), TransactionController.getAgentCommission);
+// agent
+router.get("/agent/commission/:id", checkAuth(Role.AGENT, Role.ADMIN), TransactionController.getAgentCommission);
 
 export const TransactionRoutes = router;
