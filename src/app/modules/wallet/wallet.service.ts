@@ -118,8 +118,6 @@ const sendMoney = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const fee = amount * commissionRates.sendMoney;
-    const netAmount = amount - fee;
 
     if (senderWallet.balance! < amount) {
       throw new AppError(
@@ -129,21 +127,17 @@ const sendMoney = async (
     }
 
     senderWallet.balance! -= amount;
-    receiverWallet.balance! += netAmount;
-
-    const systemWallet = await getSystemWallet();
-    systemWallet.balance! += fee;
+    receiverWallet.balance! += amount;
 
     await senderWallet.save({ session });
     await receiverWallet.save({ session });
-    await systemWallet.save({ session });
 
     await TransactionService.createTransaction({
       type: TransactionType.SENDMONEY,
       amount,
       sender: decodedToken.userId,
       receiver: receiverUser?._id,
-      fee,
+      fee:0,
     });
 
     await session.commitTransaction();
