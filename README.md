@@ -99,6 +99,7 @@ A role-based digital wallet system built using Node.js, Express.js, Mongoose, Pa
 - All routes are prefixed with `/api/v1/`
 - Auth-protected routes use Bearer tokens or Google OAuth session
 - Supports full query filtering, pagination, and field selection (e.g., `?page=2&limit=10&searchTerm=name`)
+- For postman please download and export the ePay.postman_collection.json from the repo
 
 ---
 
