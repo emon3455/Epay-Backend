@@ -44,7 +44,7 @@ A role-based digital wallet system built using Node.js, Express.js, Mongoose, Pa
 | POST | `http://localhost:5000/api/v1/auth/auth/login` | Login with email & password |
 | POST | `http://localhost:5000/api/v1/auth/auth/refresh-token` | Refresh access token |
 | POST | `http://localhost:5000/api/v1/auth/auth/logout` | Logout user |
-| POST | `http://localhost:5000/api/v1/auth/auth/reset-password` | Reset password (admin only) |
+| POST | `http://localhost:5000/api/v1/auth/auth/reset-password` | Reset password |
 | GET | `http://localhost:5000/api/v1/auth/auth/google` | Google OAuth login |
 | GET | `http://localhost:5000/api/v1/auth/auth/google/callback` | Google OAuth callback |
 
