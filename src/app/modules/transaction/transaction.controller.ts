@@ -18,26 +18,37 @@ const getMyTransactions = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllTransactions = catchAsync(async (_req: Request, res: Response) => {
-  const result = await TransactionService.getAllTransactions();
+const getAllTransactions = catchAsync(async (req: Request, res: Response) => {
+  const result = await TransactionService.getAllTransactions(
+    req.query as Record<string, string>
+  );
+
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: "All transactions fetched",
-    data: result,
+    message: "All transactions fetched successfully",
+    data: result.data,
+    meta: result.meta,
   });
 });
 
 const getAgentCommission = catchAsync(async (req: Request, res: Response) => {
-  const verifiedToken = req.user;
+  const verifiedToken = req.user as JwtPayload;
+
   const result = await TransactionService.getAgentCommission(
-    verifiedToken as JwtPayload
+    verifiedToken,
+    req.query as Record<string, string>
   );
+
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: "Agent commission summary fetched",
-    data: result,
+    meta: result.meta,
+    data: {
+      totalCommission: result.totalCommission,
+      transactions: result.data,
+    },
   });
 });
 

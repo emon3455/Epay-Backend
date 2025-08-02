@@ -204,6 +204,7 @@ const agentCashIn = async (
       agent: agent?._id,
       receiver: userWallet.user,
       fee,
+      commission: fee,
     });
 
     await session.commitTransaction();
@@ -267,6 +268,7 @@ const agentCashOut = async (
       agent: agent?._id,
       sender: userWallet.user,
       fee,
+      commission: fee,
     });
 
     await session.commitTransaction();
@@ -279,6 +281,7 @@ const agentCashOut = async (
     session.endSession();
   }
 };
+
 
 const getAllWallets = async () => {
   return await Wallet.find().populate("user");

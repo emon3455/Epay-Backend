@@ -7,6 +7,8 @@ import AppError from "../../errorHelpers/AppError";
 import { IAuthProvider, IsActive, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import { Wallet } from "../wallet/wallet.model";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { IGenericResponse } from "../../interfaces/common";
 
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, role = Role.USER, ...rest } = payload;
@@ -37,7 +39,7 @@ const createUser = async (payload: Partial<IUser>) => {
     isActive,
     ...rest,
   });
-    
+
   await Wallet.create({
     user: user._id,
     balance: 50,
@@ -51,7 +53,6 @@ const updateUser = async (
   payload: Partial<IUser>,
   decodedToken: JwtPayload
 ) => {
-  
   const ifUserExist = await User.findById(userId);
 
   if (!ifUserExist) {
@@ -78,7 +79,6 @@ const approveRejectAgent = async (
   payload: Partial<IUser>,
   decodedToken: JwtPayload
 ) => {
-  
   const agent = await User.findById(userId);
 
   if (!agent) {
@@ -91,25 +91,49 @@ const approveRejectAgent = async (
   return agent;
 };
 
-const getAllUsers = async () => {
-  const users = await User.find({role:Role.USER});
-  const totalUsers = users?.length;
+const getAllUsers = async (
+  query: Record<string, string>
+): Promise<IGenericResponse<IUser[]>> => {
+  const modifiedQuery = { ...query, role: Role.USER };
+
+  const baseQuery = User.find();
+
+  const queryBuilder = new QueryBuilder(baseQuery, modifiedQuery)
+    .filter()
+    .search(['name', 'email', 'phone'])
+    .sort()
+    .fields()
+    .paginate();
+
+  const users = await queryBuilder.build();
+  const meta = await queryBuilder.getMeta();
+
   return {
     data: users,
-    meta: {
-      total: totalUsers,
-    },
+    meta,
   };
 };
 
-const getAllAgent = async () => {
-  const agent = await User.find({role:Role.AGENT});
-  const totalAgent = agent?.length;
+const getAllAgent = async (
+  query: Record<string, string>
+): Promise<IGenericResponse<IUser[]>> => {
+  const modifiedQuery = { ...query, role: Role.AGENT };
+
+  const baseQuery = User.find();
+
+  const queryBuilder = new QueryBuilder(baseQuery, modifiedQuery)
+    .filter()
+    .search(["name", "email", "phone"])
+    .sort()
+    .fields()
+    .paginate();
+
+  const agents = await queryBuilder.build();
+  const meta = await queryBuilder.getMeta();
+
   return {
-    data: agent,
-    meta: {
-      total: totalAgent,
-    },
+    data: agents,
+    meta,
   };
 };
 
@@ -118,5 +142,5 @@ export const UserServices = {
   getAllUsers,
   updateUser,
   getAllAgent,
-  approveRejectAgent
+  approveRejectAgent,
 };
