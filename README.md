@@ -29,36 +29,6 @@ A role-based digital wallet system built using Node.js, Express.js, Mongoose, Pa
 
 3. Create a `.env` file in the root with the following variables which is present on the <b>.env.example</b>
 
-   ```env
-PORT=5000
-DB_URL=mongodb+srv://example_db_user_name:example_db_password@cluster0.edawjnd.mongodb.net/example-db?retryWrites=true&w=majority&appName=Cluster0
-NODE_ENV=development
-
-# JWT
-JWT_ACCESS_SECRET=access_secret
-JWT_ACCESS_EXPIRES=1d
-
-# BCRYPT
-BCRYPT_SALT_ROUND=10
-
-# SUPER ADMIN
-SUPER_ADMIN_EMAIL=super@gmail.com
-SUPER_ADMIN_PASSWORD=12345678
-
-# Google
-GOOGLE_CLIENT_SECRET=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8w66B
-GOOGLE_CLIENT_ID=15454875970933-bndsaibhpgo478hgp986k5c45omchr.apps.googleusercontent.com
-GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
-
-# Express Session
-EXPRESS_SESSION_SECRET=express-session
-
-# Frontend URL
-FRONTEND_URL=http://localhost:5173
-
-
-   ```
-
 4. Run the server:
    ```bash
    npm run dev
