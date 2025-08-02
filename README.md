@@ -91,12 +91,6 @@ A role-based digital wallet system built using Node.js, Express.js, Mongoose, Pa
 | USER | Send, withdraw, and add money |
 | AGENT | Perform cash-in/out operations |
 | ADMIN | Manage users, wallets, and transactions |
-| SUPER_ADMIN | Full system access |
-
----
-
-## 📅 Last Updated
-{today.strftime('%B %d, %Y')}
 
 ---
 
