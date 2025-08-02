@@ -12,9 +12,14 @@ import { ensureAgentIsApproved } from "../../helpers/ensureAgentIsApproved";
 import { commissionRates } from "../../config/systemConfig";
 import { logNotification } from "../../utils/logNotification";
 import { getSystemWallet } from "../../utils/getSystemWallet";
+import { IGenericResponse } from "../../interfaces/common";
+import { IWallet } from "./wallet.interface";
+import { QueryBuilder } from "../../utils/QueryBuilder";
 
 const getMyWallet = async (decodedToken: JwtPayload) => {
-  const wallet = await Wallet.findOne({ user: decodedToken?.userId }).populate("user");
+  const wallet = await Wallet.findOne({ user: decodedToken?.userId }).populate(
+    "user"
+  );
   if (!wallet) throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
   return wallet;
 };
@@ -118,7 +123,6 @@ const sendMoney = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-
     if (senderWallet.balance! < amount) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
@@ -137,7 +141,7 @@ const sendMoney = async (
       amount,
       sender: decodedToken.userId,
       receiver: receiverUser?._id,
-      fee:0,
+      fee: 0,
     });
 
     await session.commitTransaction();
@@ -282,9 +286,24 @@ const agentCashOut = async (
   }
 };
 
+const getAllWallets = async (
+  query: Record<string, string>
+): Promise<IGenericResponse<IWallet[]>> => {
+  const baseQuery = Wallet.find().populate("user");
 
-const getAllWallets = async () => {
-  return await Wallet.find().populate("user");
+  const queryBuilder = new QueryBuilder(baseQuery, query)
+    .filter()
+    .sort()
+    .fields()
+    .paginate();
+
+  const wallet = await queryBuilder.build();
+  const meta = await queryBuilder.getMeta();
+
+  return {
+    data: wallet,
+    meta,
+  };
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

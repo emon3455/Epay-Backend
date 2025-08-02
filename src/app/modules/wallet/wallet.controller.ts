@@ -102,13 +102,14 @@ const agentCashOut = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllWallets = catchAsync(async (_req: Request, res: Response) => {
-  const result = await WalletService.getAllWallets();
+const getAllWallets = catchAsync(async (req: Request, res: Response) => {
+  const result = await WalletService.getAllWallets(req.query as Record<string, string>);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: "All wallets retrieved",
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
