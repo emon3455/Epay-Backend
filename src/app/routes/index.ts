@@ -3,6 +3,7 @@ import { AuthRoutes } from "../modules/auth/auth.route"
 import { UserRoutes } from "../modules/user/user.route"
 import { WalletRoutes } from "../modules/wallet/wallet.route"
 import { TransactionRoutes } from "../modules/transaction/transaction.route"
+import { SystemConfigRoutes } from "../modules/systemConfig/systemConfig.routes"
 
 export const router = Router()
 
@@ -22,7 +23,11 @@ const moduleRoutes = [
     {
         path: "/transaction",
         route: TransactionRoutes
-    }
+    },
+    {
+        path: "/system-config",
+        route: SystemConfigRoutes
+    },
 ]
 
 moduleRoutes.forEach((route) => {
