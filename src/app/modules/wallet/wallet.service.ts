@@ -9,12 +9,13 @@ import { JwtPayload } from "jsonwebtoken";
 import { TransactionService } from "../transaction/transaction.service";
 import { TransactionType } from "../transaction/transaction.interface";
 import { ensureAgentIsApproved } from "../../helpers/ensureAgentIsApproved";
-import { commissionRates } from "../../config/systemConfig";
+// import { commissionRates } from "../../config/systemConfig";
 import { logNotification } from "../../utils/logNotification";
 import { getSystemWallet } from "../../utils/getSystemWallet";
 import { IGenericResponse } from "../../interfaces/common";
 import { IWallet } from "./wallet.interface";
 import { QueryBuilder } from "../../utils/QueryBuilder";
+import { getRates } from "../../config/getRates";
 
 const getMyWallet = async (decodedToken: JwtPayload) => {
   const wallet = await Wallet.findOne({ user: decodedToken?.userId }).populate(
@@ -52,35 +53,87 @@ const addMoney = async (decodedToken: JwtPayload, amount: number) => {
   return wallet;
 };
 
-const withdrawMoney = async (decodedToken: JwtPayload, amount: number) => {
-  const wallet = await Wallet.findOne({ user: decodedToken.userId }).populate(
-    "user"
-  );
-  if (!wallet) throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
-  if (wallet.isActive === IsActive.BLOCKED) {
+const withdrawMoney = async (
+  decodedToken: JwtPayload,
+  amount: number,
+  agentId: string
+) => {
+  if (amount <= 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Amount must be greater than 0");
+  }
+  if (!agentId) {
+    throw new AppError(httpStatus.BAD_REQUEST, "agentId is required");
+  }
+
+  // Load user, agent, wallets
+  const [user, agent] = await Promise.all([
+    User.findById(decodedToken.userId),
+    User.findById(agentId),
+  ]);
+  if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  if (!agent) throw new AppError(httpStatus.NOT_FOUND, "Agent not found");
+
+  const [userWallet, agentWallet] = await Promise.all([
+    Wallet.findOne({ user: user._id }),
+    Wallet.findOne({ user: agent._id }),
+  ]);
+  if (!userWallet)
+    throw new AppError(httpStatus.NOT_FOUND, "User wallet not found");
+  if (!agentWallet)
+    throw new AppError(httpStatus.NOT_FOUND, "Agent wallet not found");
+
+  if (userWallet.isActive === IsActive.BLOCKED) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "Your wallet is currently blocked"
     );
   }
-  if (wallet.balance! < amount)
+  if (agentWallet.isActive === IsActive.BLOCKED) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Agent wallet is currently blocked"
+    );
+  }
+
+  const { userWithdrawRate } = await getRates();
+  const fee = amount * userWithdrawRate;
+  const totalDebit = amount + fee;
+
+  if (userWallet.balance! < totalDebit) {
     throw new AppError(httpStatus.BAD_REQUEST, "Insufficient balance");
+  }
 
-  if (amount <= 0)
-    throw new AppError(httpStatus.BAD_REQUEST, "Amount must be greater than 0");
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const systemWallet = await getSystemWallet();
 
-  wallet.balance! -= amount;
-  await wallet.save();
+    // Move funds: user -> agent, fee -> system
+    userWallet.balance! -= totalDebit; // amount + fee
+    agentWallet.balance! += amount; // agent receives cash amount
+    systemWallet.balance! += fee; // system collects fee
 
-  await TransactionService.createTransaction({
-    type: TransactionType.WITHDRAWMONEY,
-    amount,
-    sender: wallet?.user?._id,
-  });
+    await userWallet.save({ session });
+    await agentWallet.save({ session });
+    await systemWallet.save({ session });
 
-  logNotification(`Money withdrawn from wallet: ${wallet.user}`);
+    await TransactionService.createTransaction({
+      type: TransactionType.WITHDRAWMONEY,
+      amount,
+      sender: userWallet.user, // user is payer
+      agent: agent._id, // serviced by agent
+      fee,
+      commission: fee, // system revenue
+    });
 
-  return wallet;
+    await session.commitTransaction();
+    return userWallet;
+  } catch (e) {
+    await session.abortTransaction();
+    throw e;
+  } finally {
+    session.endSession();
+  }
 };
 
 const sendMoney = async (
@@ -88,14 +141,21 @@ const sendMoney = async (
   receiverEmailOrPhone: string,
   amount: number
 ) => {
+  if (amount <= 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Amount must be greater than 0");
+  }
+
+  const rates = await getRates();
+  const fee = amount * rates.userSendMoneyRate;
+  const totalDebit = amount + fee;
+
   const senderWallet = await Wallet.findOne({ user: decodedToken.userId });
-  if (!senderWallet || senderWallet.balance! < amount) {
+  if (!senderWallet || senderWallet.balance! < totalDebit) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Insufficient balance or Wallet not found"
     );
   }
-
   if (senderWallet.isActive === IsActive.BLOCKED) {
     throw new AppError(
       httpStatus.FORBIDDEN,
@@ -112,7 +172,6 @@ const sendMoney = async (
   const receiverWallet = await Wallet.findOne({ user: receiverUser._id });
   if (!receiverWallet)
     throw new AppError(httpStatus.NOT_FOUND, "Receiver's wallet not found");
-
   if (receiverWallet.isActive === IsActive.BLOCKED) {
     throw new AppError(
       httpStatus.FORBIDDEN,
@@ -123,25 +182,24 @@ const sendMoney = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    if (senderWallet.balance! < amount) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Insufficient balance including fee"
-      );
-    }
+    const systemWallet = await getSystemWallet();
 
-    senderWallet.balance! -= amount;
-    receiverWallet.balance! += amount;
+    // Balance updates
+    senderWallet.balance! -= totalDebit; // amount + fee
+    receiverWallet.balance! += amount; // receiver gets the full amount
+    systemWallet.balance! += fee; // system collects the fee
 
     await senderWallet.save({ session });
     await receiverWallet.save({ session });
+    await systemWallet.save({ session });
 
     await TransactionService.createTransaction({
       type: TransactionType.SENDMONEY,
       amount,
       sender: decodedToken.userId,
-      receiver: receiverUser?._id,
-      fee: 0,
+      receiver: receiverUser._id,
+      fee,
+      commission: fee, // track as commission to the system if you like
     });
 
     await session.commitTransaction();
@@ -168,6 +226,10 @@ const agentCashIn = async (
   if (amount <= 0)
     throw new AppError(httpStatus.BAD_REQUEST, "Amount must be greater than 0");
 
+  const rates = await getRates();
+  const fee = amount * rates.agentCashInRate;
+  const netAmount = amount - fee;
+
   const agentWallet = await Wallet.findOne({ user: agent?._id });
   if (!agentWallet || agentWallet.balance! < amount) {
     throw new AppError(
@@ -189,13 +251,10 @@ const agentCashIn = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const fee = amount * commissionRates.agentCashIn;
-    const netAmount = amount - fee;
+    const systemWallet = await getSystemWallet();
 
     agentWallet.balance! -= amount;
     userWallet.balance! += netAmount;
-
-    const systemWallet = await getSystemWallet();
     systemWallet.balance! += fee;
 
     await agentWallet.save({ session });
@@ -224,63 +283,51 @@ const agentCashIn = async (
 
 const agentCashOut = async (
   decodedToken: JwtPayload,
-  userId: string,
   amount: number
 ) => {
   const agent = await User.findById(decodedToken.userId);
   ensureAgentIsApproved(agent!);
 
-  if (amount <= 0)
+  if (amount <= 0) {
     throw new AppError(httpStatus.BAD_REQUEST, "Amount must be greater than 0");
-
-  const userWallet = await Wallet.findOne({ user: userId });
-  if (!userWallet || userWallet.balance! < amount) {
-    throw new AppError(httpStatus.BAD_REQUEST, "User has insufficient balance");
-  }
-
-  if (userWallet.isActive === IsActive.BLOCKED) {
-    throw new AppError(
-      httpStatus.FORBIDDEN,
-      "User wallet is currently blocked"
-    );
   }
 
   const agentWallet = await Wallet.findOne({ user: agent?._id });
-  if (!agentWallet) {
-    throw new AppError(httpStatus.NOT_FOUND, "Agent wallet not found");
+  if (!agentWallet) throw new AppError(httpStatus.NOT_FOUND, "Agent wallet not found");
+  if (agentWallet.isActive === IsActive.BLOCKED) {
+    throw new AppError(httpStatus.FORBIDDEN, "Agent wallet is currently blocked");
+  }
+  if (agentWallet.balance! < amount) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Agent has insufficient balance");
   }
 
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const fee = amount * commissionRates.agentCashOut;
-    const netAmount = amount - fee;
-
-    userWallet.balance! -= amount;
-    agentWallet.balance! += netAmount;
-
     const systemWallet = await getSystemWallet();
-    systemWallet.balance! += fee;
 
-    await userWallet.save({ session });
+    // Settlement: agent -> system
+    agentWallet.balance! -= amount;
+    systemWallet.balance! += amount;
+
     await agentWallet.save({ session });
     await systemWallet.save({ session });
 
+    // Log as CASHOUT (no fee; fee already charged on the user's withdrawal)
     await TransactionService.createTransaction({
       type: TransactionType.CASHOUT,
       amount,
-      agent: agent?._id,
-      sender: userWallet.user,
-      fee,
-      commission: fee,
+      agent: agent!._id,
+      receiver: systemWallet.user, // if your system wallet has a linked user id
+      fee: 0,
+      commission: 0,
     });
 
     await session.commitTransaction();
-    logNotification(`Agent ${agent?._id} cashed out from ${userWallet.user}`);
-    return userWallet;
-  } catch (err) {
+    return agentWallet;
+  } catch (e) {
     await session.abortTransaction();
-    throw err;
+    throw e;
   } finally {
     session.endSession();
   }

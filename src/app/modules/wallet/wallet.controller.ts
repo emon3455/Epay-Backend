@@ -40,7 +40,8 @@ const withdrawMoney = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   const result = await WalletService.withdrawMoney(
     verifiedToken as JwtPayload,
-    payload.amount
+    payload.amount,
+    payload.agentId
   );
   sendResponse(res, {
     success: true,
@@ -88,11 +89,9 @@ const agentCashIn = catchAsync(async (req: Request, res: Response) => {
 const agentCashOut = catchAsync(async (req: Request, res: Response) => {
   const verifiedToken = req.user;
   const payload = req.body;
-  const { userId, amount } = payload;
   const result = await WalletService.agentCashOut(
     verifiedToken as JwtPayload,
-    userId,
-    amount
+    payload.amount
   );
   sendResponse(res, {
     success: true,
