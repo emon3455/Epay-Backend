@@ -5,6 +5,7 @@ import { WalletRoutes } from "../modules/wallet/wallet.route"
 import { TransactionRoutes } from "../modules/transaction/transaction.route"
 import { SystemConfigRoutes } from "../modules/systemConfig/systemConfig.routes"
 import { StatsRoutes } from "../modules/stats/stats.routes"
+import { OtpRoutes } from "../modules/otp/otp.route"
 
 export const router = Router()
 
@@ -16,6 +17,10 @@ const moduleRoutes = [
     {
         path: "/auth",
         route: AuthRoutes
+    },
+    {
+        path: "/otp",
+        route: OtpRoutes
     },
     {
         path: "/wallet",
