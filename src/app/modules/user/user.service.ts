@@ -136,11 +136,17 @@ const getAllAgent = async (
     meta,
   };
 };
-
+const getMe = async (userId: string) => {
+    const user = await User.findById(userId).select("-password");
+    return {
+        data: user
+    }
+};
 export const UserServices = {
   createUser,
   getAllUsers,
   updateUser,
   getAllAgent,
   approveRejectAgent,
+  getMe
 };

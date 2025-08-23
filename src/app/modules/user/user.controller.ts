@@ -81,10 +81,22 @@ const getAllAgent = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMe = catchAsync(async (req: Request, res: Response) => {
+    const decodedToken = req.user as JwtPayload
+    const result = await UserServices.getMe(decodedToken.userId);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "Your profile Retrieved Successfully",
+        data: result.data
+    })
+})
+
 export const UserControllers = {
   createUser,
   getAllUsers,
   updateUser,
   getAllAgent,
   approveRejectAgent,
+  getMe
 };

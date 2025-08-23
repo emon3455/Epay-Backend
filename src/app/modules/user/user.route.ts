@@ -7,6 +7,7 @@ import { createUserZodSchema, updateUserZodSchema } from "./user.validation";
 
 const router = Router();
 
+router.get("/me", checkAuth(...Object.values(Role)), UserControllers.getMe)
 router.post("/register",validateRequest(createUserZodSchema), UserControllers.createUser);
 router.get(
   "/all-user",
