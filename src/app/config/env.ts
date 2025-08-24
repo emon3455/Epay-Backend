@@ -22,6 +22,7 @@ interface EnvConfig {
   REDIS_PASSWORD: string;
   REDIS_HOST: string;
   REDIS_PORT: string;
+  JWT_RESET_SECRET: string;
   EMAIL_SENDER: {
     SMTP_USER: string;
     SMTP_PASS: string;
@@ -56,7 +57,9 @@ const loadEnvVariables = (): EnvConfig => {
     "SMTP_PORT",
     "SMTP_HOST",
     "SMTP_USER",
-    "SMTP_FROM",];
+    "SMTP_FROM",
+    "JWT_RESET_SECRET",
+  ];
 
   requiredEnvVariables.forEach((key) => {
     if (!process.env[key]) {
@@ -85,6 +88,7 @@ const loadEnvVariables = (): EnvConfig => {
     REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
     REDIS_HOST: process.env.REDIS_HOST as string,
     REDIS_PORT: process.env.REDIS_PORT as string,
+    JWT_RESET_SECRET: process.env.JWT_RESET_SECRET as string,
     EMAIL_SENDER: {
       SMTP_USER: process.env.SMTP_USER as string,
       SMTP_PASS: process.env.SMTP_PASS as string,
