@@ -19,11 +19,11 @@ const getMyWallet = catchAsync(async (req: Request, res: Response) => {
 });
 
 const addMoney = catchAsync(async (req: Request, res: Response) => {
-  const verifiedToken = req.user;
+  const id = req.body.id;
 
   const payload = req.body;
   const result = await WalletService.addMoney(
-    verifiedToken as JwtPayload,
+    id as string,
     payload.amount
   );
   sendResponse(res, {

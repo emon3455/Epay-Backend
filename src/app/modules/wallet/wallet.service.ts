@@ -25,14 +25,14 @@ const getMyWallet = async (decodedToken: JwtPayload) => {
   return wallet;
 };
 
-const addMoney = async (decodedToken: JwtPayload, amount: number) => {
-  const wallet = await Wallet.findOne({ user: decodedToken.userId });
+const addMoney = async (id: string, amount: number) => {
+  const wallet = await Wallet.findOne({ user: id });
   if (!wallet) throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
 
   if (wallet.isActive === IsActive.BLOCKED) {
     throw new AppError(
       httpStatus.FORBIDDEN,
-      "Your wallet is currently blocked"
+      "Receiver wallet is currently blocked"
     );
   }
 
