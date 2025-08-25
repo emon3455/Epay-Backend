@@ -19,6 +19,11 @@ router.get(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   UserControllers.getAllAgent
 );
+router.get(
+  "/all-system-user",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  UserControllers.getAllSystemUser
+);
 router.patch(
   "/:id",
   validateRequest(updateUserZodSchema),

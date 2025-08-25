@@ -100,6 +100,18 @@ const getAllAgent = catchAsync(async (req: Request, res: Response) => {
     data: result.data,
   });
 });
+const getAllSystemUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.getAllSystemUser(
+    req.query as Record<string, string>
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Agents fetched successfully",
+    meta: result.meta,
+    data: result.data,
+  });
+});
 
 const getMe = catchAsync(async (req: Request, res: Response) => {
     const decodedToken = req.user as JwtPayload
@@ -119,5 +131,6 @@ export const UserControllers = {
   getAllAgent,
   approveRejectAgent,
   approveRejectUser,
-  getMe
+  getMe,
+  getAllSystemUser
 };

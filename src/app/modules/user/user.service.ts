@@ -153,6 +153,29 @@ const getAllAgent = async (
     meta,
   };
 };
+
+const getAllSystemUser = async (
+  query: Record<string, string>
+): Promise<IGenericResponse<IUser[]>> => {
+  const modifiedQuery = { ...query };
+
+  const baseQuery = User.find();
+
+  const queryBuilder = new QueryBuilder(baseQuery, modifiedQuery)
+    .filter()
+    .search(["name", "email", "phone"])
+    .sort()
+    .fields()
+    .paginate();
+
+  const allUsers = await queryBuilder.build();
+  const meta = await queryBuilder.getMeta();
+
+  return {
+    data: allUsers,
+    meta,
+  };
+};
 const getMe = async (userId: string) => {
     const user = await User.findById(userId).select("-password");
     return {
@@ -166,5 +189,6 @@ export const UserServices = {
   getAllAgent,
   approveRejectAgent,
   approveRejectUser,
-  getMe
+  getMe,
+getAllSystemUser
 };
