@@ -22,14 +22,94 @@ const createTransaction = async (data: ITransaction) => {
   return await Transaction.create(data);
 };
 
-const getMyTransactions = async (decodedToken: JwtPayload) => {
-  return await Transaction.find({
-    $or: [
-      { sender: decodedToken.userId },
-      { receiver: decodedToken.userId },
-      { agent: decodedToken.userId },
-    ],
-  }).sort({ createdAt: -1 });
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type MyTxFilters = {
+  page?: number;
+  limit?: number;
+  role?: "SENT" | "RECEIVED" | "AGENT";
+  type?: string;
+  status?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  searchTerm?: string;
+};
+
+const getMyTransactions = async (decodedToken: JwtPayload, q: MyTxFilters = {}) => {
+  const userId = new Types.ObjectId(decodedToken.userId);
+  const page = q.page ?? 1;
+  const limit = q.limit ?? 20;
+  const skip = (page - 1) * limit;
+
+  // base visibility (sent/received/agent)
+  let visibility: any = { $or: [{ sender: userId }, { receiver: userId }, { agent: userId }] };
+  if (q.role === "SENT") visibility = { sender: userId };
+  if (q.role === "RECEIVED") visibility = { receiver: userId };
+  if (q.role === "AGENT") visibility = { agent: userId };
+
+  // numeric & enum filters
+  const match: any = { ...visibility };
+  if (q.type) match.type = q.type;
+  if (q.status) match.status = q.status;
+  if (q.minAmount != null || q.maxAmount != null) {
+    match.amount = {};
+    if (q.minAmount != null) match.amount.$gte = q.minAmount;
+    if (q.maxAmount != null) match.amount.$lte = q.maxAmount;
+  }
+  if (q.dateFrom || q.dateTo) {
+    match.createdAt = {};
+    if (q.dateFrom) match.createdAt.$gte = new Date(`${q.dateFrom}T00:00:00.000Z`);
+    if (q.dateTo)   match.createdAt.$lte = new Date(`${q.dateTo}T23:59:59.999Z`);
+  }
+
+  // aggregate so we can search on counterparty name/email/phone
+  const pipeline: any[] = [
+    { $match: match },
+    { $sort: { createdAt: -1 } },
+    // lookups
+    { $lookup: { from: User.collection.name, localField: "sender",   foreignField: "_id", as: "senderUser" } },
+    { $lookup: { from: User.collection.name, localField: "receiver", foreignField: "_id", as: "receiverUser" } },
+    { $lookup: { from: User.collection.name, localField: "agent",    foreignField: "_id", as: "agentUser" } },
+    { $addFields: {
+        senderUser:   { $first: "$senderUser" },
+        receiverUser: { $first: "$receiverUser" },
+        agentUser:    { $first: "$agentUser" },
+      }
+    },
+  ];
+
+  if (q.searchTerm && q.searchTerm.trim()) {
+    const rx = new RegExp(q.searchTerm.trim(), "i");
+    pipeline.push({
+      $match: {
+        $or: [
+          { "senderUser.name":   rx }, { "senderUser.email":   rx }, { "senderUser.phone":   rx },
+          { "receiverUser.name": rx }, { "receiverUser.email": rx }, { "receiverUser.phone": rx },
+          { "agentUser.name":    rx }, { "agentUser.email":    rx }, { "agentUser.phone":    rx },
+          { reference: rx }, // optional text fields if exist
+          { note: rx },
+        ],
+      },
+    });
+  }
+
+  // paginate
+  pipeline.push({
+    $facet: {
+      data: [{ $skip: skip }, { $limit: limit }],
+      total: [{ $count: "count" }],
+    },
+  });
+
+  const out = await Transaction.aggregate(pipeline);
+  const data = out?.[0]?.data ?? [];
+  const total = out?.[0]?.total?.[0]?.count ?? 0;
+
+  return {
+    data,
+    meta: { page, limit, total },
+  };
 };
 
 // const getAllTransactions = async (

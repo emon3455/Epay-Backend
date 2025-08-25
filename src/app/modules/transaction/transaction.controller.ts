@@ -5,16 +5,45 @@ import { TransactionService } from "./transaction.service";
 import httpStatus from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
 
-const getMyTransactions = catchAsync(async (req: Request, res: Response) => {
-  const verifiedToken = req.user;
+export const getMyTransactions = catchAsync(async (req: Request, res: Response) => {
+  const verifiedToken = req.user as JwtPayload;
+
+  // filters/pagination (all optional)
+  const {
+    page = "1",
+    limit = "20",
+    role,          // "SENT" | "RECEIVED" | "AGENT"
+    type,          // e.g. "SENDMONEY" | "ADDMONEY" | ...
+    status,        // if you track status
+    minAmount,
+    maxAmount,
+    dateFrom,      // ISO date string (YYYY-MM-DD)
+    dateTo,        // ISO date string (YYYY-MM-DD)
+    searchTerm,    // matches counterparty name/email/phone
+  } = req.query as Record<string, string>;
+
   const result = await TransactionService.getMyTransactions(
-    verifiedToken as JwtPayload
+    verifiedToken,
+    {
+      page: Number(page) || 1,
+      limit: Number(limit) || 20,
+      role: role as "SENT" | "RECEIVED" | "AGENT" | undefined,
+      type,
+      status,
+      minAmount: minAmount ? Number(minAmount) : undefined,
+      maxAmount: maxAmount ? Number(maxAmount) : undefined,
+      dateFrom,
+      dateTo,
+      searchTerm,
+    }
   );
+
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: "Transaction history fetched",
-    data: result,
+    message: "My Transaction history fetched",
+    data: result.data,
+    meta: result.meta,
   });
 });
 
