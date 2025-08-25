@@ -91,6 +91,23 @@ const approveRejectAgent = async (
   return agent;
 };
 
+const approveRejectUser = async (
+  userId: string,
+  payload: Partial<IUser>,
+  decodedToken: JwtPayload
+) => {
+  const agent = await User.findById(userId);
+
+  if (!agent) {
+    throw new AppError(httpStatus.NOT_FOUND, "Agent Not Found");
+  }
+
+  agent.isActive = payload.isActive;
+
+  await agent.save();
+  return agent;
+};
+
 const getAllUsers = async (
   query: Record<string, string>
 ): Promise<IGenericResponse<IUser[]>> => {
@@ -148,5 +165,6 @@ export const UserServices = {
   updateUser,
   getAllAgent,
   approveRejectAgent,
+  approveRejectUser,
   getMe
 };

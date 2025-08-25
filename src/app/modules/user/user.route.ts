@@ -30,4 +30,9 @@ router.patch(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   UserControllers.approveRejectAgent
 );
+router.patch(
+  "/approve-reject/:id",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  UserControllers.approveRejectUser
+);
 export const UserRoutes = router;

@@ -39,7 +39,7 @@ const createNewAccessTokenWithRefreshToken = (refreshToken) => __awaiter(void 0,
     if (!isUserExist) {
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "User does not exist");
     }
-    if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED || isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
+    if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED) {
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, `User is ${isUserExist.isActive}`);
     }
     if (isUserExist.isDeleted) {

@@ -55,6 +55,26 @@ const approveRejectAgent = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const approveRejectUser = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.id;
+
+  const verifiedToken = req.user;
+
+  const payload = req.body;
+  const user = await UserServices.approveRejectUser(
+    userId,
+    payload,
+    verifiedToken as JwtPayload
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User Updated Successfully",
+    data: user,
+  });
+});
+
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.getAllUsers(
     req.query as Record<string, string>
@@ -98,5 +118,6 @@ export const UserControllers = {
   updateUser,
   getAllAgent,
   approveRejectAgent,
+  approveRejectUser,
   getMe
 };

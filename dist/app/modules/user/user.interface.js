@@ -11,7 +11,6 @@ var Role;
 var IsActive;
 (function (IsActive) {
     IsActive["ACTIVE"] = "ACTIVE";
-    IsActive["INACTIVE"] = "INACTIVE";
     IsActive["BLOCKED"] = "BLOCKED";
     IsActive["PENDING"] = "PENDING";
 })(IsActive || (exports.IsActive = IsActive = {}));

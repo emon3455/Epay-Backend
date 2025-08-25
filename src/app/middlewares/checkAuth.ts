@@ -24,7 +24,7 @@ export const checkAuth = (...authRoles: string[]) => async (req: Request, res: R
         if (!isUserExist) {
             throw new AppError(httpStatus.BAD_REQUEST, "User does not exist")
         }
-        if (isUserExist.isActive === IsActive.BLOCKED || isUserExist.isActive === IsActive.INACTIVE) {
+        if (isUserExist.isActive === IsActive.BLOCKED) {
             throw new AppError(httpStatus.BAD_REQUEST, `User is ${isUserExist.isActive}`)
         }
         if (isUserExist.isDeleted) {

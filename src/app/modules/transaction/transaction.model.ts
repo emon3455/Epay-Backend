@@ -14,4 +14,11 @@ const transactionSchema = new Schema<ITransaction>(
   { timestamps: true }
 );
 
+transactionSchema.index({ createdAt: -1 });
+transactionSchema.index({ amount: 1 });
+transactionSchema.index({ type: 1 });
+transactionSchema.index({ sender: 1 });
+transactionSchema.index({ receiver: 1 });
+transactionSchema.index({ agent: 1 });
+
 export const Transaction = model<ITransaction>("Transaction", transactionSchema);

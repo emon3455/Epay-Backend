@@ -50,4 +50,11 @@ userSchema.virtual("wallet", {
 userSchema.set("toObject", { virtuals: true });
 userSchema.set("toJSON", { virtuals: true });
 
+// user.model.ts (for party search)
+userSchema.index({ name: "text", email: "text", phone: "text" });
+// or simple regex-friendly indexes:
+userSchema.index({ name: 1 });
+userSchema.index({ email: 1 });
+userSchema.index({ phone: 1 });
+
 export const User = model<IUser>("User", userSchema);
