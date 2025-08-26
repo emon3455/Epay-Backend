@@ -74,6 +74,32 @@ const updateUser = async (
   return newUpdatedUser;
 };
 
+const updateMe = async (
+  payload: Partial<IUser>,
+  decodedToken: JwtPayload
+) => {
+  
+  const ifUserExist = await User.findById(decodedToken?.userId);
+
+  if (!ifUserExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+  }
+
+  if (payload.password) {
+    payload.password = await bcryptjs.hash(
+      payload.password,
+      envVars.BCRYPT_SALT_ROUND
+    );
+  }
+
+  const newUpdatedUser = await User.findByIdAndUpdate(decodedToken?.userId, payload, {
+    new: true,
+    runValidators: true,
+  });
+
+  return newUpdatedUser;
+};
+
 const approveRejectAgent = async (
   userId: string,
   payload: Partial<IUser>,
@@ -190,5 +216,6 @@ export const UserServices = {
   approveRejectAgent,
   approveRejectUser,
   getMe,
-getAllSystemUser
+  getAllSystemUser,
+  updateMe
 };

@@ -34,6 +34,23 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
     data: user,
   });
 });
+const updateMe = catchAsync(async (req: Request, res: Response) => {
+
+  const verifiedToken = req.user;
+
+  const payload = req.body;
+  const user = await UserServices.updateMe(
+    payload,
+    verifiedToken as JwtPayload
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User Updated Successfully",
+    data: user,
+  });
+});
 
 const approveRejectAgent = catchAsync(async (req: Request, res: Response) => {
   const userId = req.params.id;
@@ -132,5 +149,6 @@ export const UserControllers = {
   approveRejectAgent,
   approveRejectUser,
   getMe,
-  getAllSystemUser
+  getAllSystemUser,
+  updateMe
 };

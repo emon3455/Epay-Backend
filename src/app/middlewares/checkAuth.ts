@@ -16,8 +16,8 @@ export const checkAuth = (...authRoles: string[]) => async (req: Request, res: R
             throw new AppError(403, "No Token Recieved")
         }
 
-
         const verifiedToken = verifyToken(accessToken, envVars.JWT_ACCESS_SECRET) as JwtPayload
+        
 
         const isUserExist = await User.findOne({ email: verifiedToken.email })
 
@@ -35,6 +35,7 @@ export const checkAuth = (...authRoles: string[]) => async (req: Request, res: R
             throw new AppError(403, "You are not permitted to view this route!!!")
         }
         req.user = verifiedToken
+        
         next()
 
     } catch (error) {

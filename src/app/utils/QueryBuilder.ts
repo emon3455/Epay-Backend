@@ -1,5 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Query } from "mongoose";
 import { excludeField } from "../constants";
+
+
+const toDayStart = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
+const toDayEnd   = (iso: string) => new Date(`${iso}T23:59:59.999Z`);
 
 export class QueryBuilder<T> {
   public modelQuery: Query<T[], T>;
@@ -11,16 +16,25 @@ export class QueryBuilder<T> {
   }
 
   filter(): this {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filter: any = {};
+    const f: any = {};
 
+    // copy allowed query keys as exact matches
     for (const key in this.query) {
       if (!excludeField.includes(key)) {
-        filter[key] = this.query[key];
+        f[key] = this.query[key];
       }
     }
 
-    this.modelQuery = this.modelQuery.find(filter);
+    // map startDate/endDate -> createdAt range
+    const { startDate, endDate } = this.query;
+    if (startDate || endDate) {
+      f.createdAt = {
+        ...(startDate ? { $gte: toDayStart(startDate) } : {}),
+        ...(endDate   ? { $lte: toDayEnd(endDate) } : {}),
+      };
+    }
+
+    this.modelQuery = this.modelQuery.find(f);
     return this;
   }
 

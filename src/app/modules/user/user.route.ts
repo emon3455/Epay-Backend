@@ -25,10 +25,15 @@ router.get(
   UserControllers.getAllSystemUser
 );
 router.patch(
-  "/:id",
+  "/update/:id",
   validateRequest(updateUserZodSchema),
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   UserControllers.updateUser
+);
+router.patch(
+  "/update-me",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.AGENT, Role.USER),
+  UserControllers.updateMe
 );
 router.patch(
   "/agent/approve-reject/:id",

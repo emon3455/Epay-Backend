@@ -254,11 +254,14 @@ const getAgentCommission = async (
   const transactions = await queryBuilder.build();
   const meta = await queryBuilder.getMeta();
 
-  const allTransaction = await Transaction.find({ agent: agentId});
-  const totalCommission = allTransaction.reduce(
-    (sum, t: any) => sum + (Number(t?.commission) || 0),
-    0
-  );
+ const listFilter = queryBuilder.modelQuery.getFilter();
+
+  // Option A: aggregation (fast, server-side)
+  const agg = await Transaction.aggregate([
+    { $match: listFilter },
+    { $group: { _id: null, total: { $sum: { $ifNull: ["$commission", 0] } } } },
+  ]);
+  const totalCommission = agg[0]?.total || 0;
   return {
     meta,
     totalCommission: totalCommission,
