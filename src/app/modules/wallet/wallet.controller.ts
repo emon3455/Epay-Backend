@@ -38,6 +38,7 @@ const withdrawMoney = catchAsync(async (req: Request, res: Response) => {
   const verifiedToken = req.user;
 
   const payload = req.body;
+  
   const result = await WalletService.withdrawMoney(
     verifiedToken as JwtPayload,
     payload.amount,

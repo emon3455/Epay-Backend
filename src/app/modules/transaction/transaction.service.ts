@@ -254,15 +254,15 @@ const getAgentCommission = async (
   const transactions = await queryBuilder.build();
   const meta = await queryBuilder.getMeta();
 
-  const totalCommission = await Transaction.aggregate([
-    { $match: query },
-    { $group: { _id: null, total: { $sum: "$commission" } } },
-  ]);
-
+  const allTransaction = await Transaction.find({ agent: agentId});
+  const totalCommission = allTransaction.reduce(
+    (sum, t: any) => sum + (Number(t?.commission) || 0),
+    0
+  );
   return {
     meta,
-    totalCommission: totalCommission[0]?.total || 0,
-    data: transactions,
+    totalCommission: totalCommission,
+    data: transactions
   };
 };
 

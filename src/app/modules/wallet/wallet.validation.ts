@@ -22,6 +22,9 @@ export const updateWalletZodSchema = z.object({
 
 // ✅ Add Money
 export const addMoneyZodSchema = z.object({
+  id: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
+    message: "Invalid user Id",
+  }),
   amount: z
     .number({ invalid_type_error: "Amount must be a number" })
     .positive({ message: "Amount must be greater than zero" }),
@@ -29,6 +32,9 @@ export const addMoneyZodSchema = z.object({
 
 // ✅ Withdraw Money
 export const withdrawMoneyZodSchema = z.object({
+  agentId: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
+    message: "Invalid Agent Id",
+  }),
   amount: z
     .number({ invalid_type_error: "Amount must be a number" })
     .positive({ message: "Amount must be greater than zero" }),
