@@ -388,7 +388,7 @@ const agentWithdraw = async (
     // record CASHOUT with proper parties
     await TransactionService.createTransaction(
       {
-        type: TransactionType.CASHOUT,
+        type: TransactionType.WITHDRAWMONEY,
         amount,
         agent: agent!._id,
         sender: userWallet.user,
