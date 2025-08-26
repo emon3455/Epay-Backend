@@ -102,6 +102,22 @@ const agentCashOut = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const agentWithdraw = catchAsync(async (req: Request, res: Response) => {
+  const verifiedToken = req.user;
+  const payload = req.body;
+  const result = await WalletService.agentWithdraw(
+    verifiedToken as JwtPayload,
+    payload.userId,
+    payload.amount,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Cash-out successful",
+    data: result,
+  });
+});
+
 const getAllWallets = catchAsync(async (req: Request, res: Response) => {
   const result = await WalletService.getAllWallets(req.query as Record<string, string>);
   sendResponse(res, {
@@ -135,4 +151,5 @@ export const WalletController = {
   agentCashOut,
   getAllWallets,
   blockWallet,
+  agentWithdraw
 };

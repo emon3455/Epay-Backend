@@ -333,6 +333,81 @@ const agentCashOut = async (
   }
 };
 
+const agentWithdraw = async (
+  decodedToken: JwtPayload,
+  userId: string,
+  amount: number
+) => {
+  const agent = await User.findById(decodedToken.userId);
+  ensureAgentIsApproved(agent!);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Amount must be greater than 0");
+  }
+
+  const [agentWallet, userWallet] = await Promise.all([
+    Wallet.findOne({ user: agent?._id }),
+    Wallet.findOne({ user: userId }),
+  ]);
+
+  if (!agentWallet) throw new AppError(httpStatus.NOT_FOUND, "Agent wallet not found");
+  if (agentWallet.isActive === IsActive.BLOCKED) {
+    throw new AppError(httpStatus.FORBIDDEN, "Agent wallet is currently blocked");
+  }
+
+  if (!userWallet) throw new AppError(httpStatus.NOT_FOUND, "User wallet not found");
+  if (userWallet.isActive === IsActive.BLOCKED) {
+    throw new AppError(httpStatus.FORBIDDEN, "User wallet is currently blocked");
+  }
+
+  // fees
+  const rates = await getRates(); // { agentCashOutRate: number, ... }
+  const feeRate = Number(rates?.agentCashOutRate ?? 0);
+  const fee = +(amount * feeRate).toFixed(2);
+  const totalDebit = +(amount + fee).toFixed(2);
+
+  // user must cover amount + fee
+  if ((userWallet.balance ?? 0) < totalDebit) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User has insufficient balance (amount + fee)");
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const systemWallet = await getSystemWallet();
+
+    // user → debit (amount+fee), agent → credit (amount), system → fee
+    userWallet.balance! -= totalDebit;
+    agentWallet.balance! += amount;
+    systemWallet.balance! += fee;
+
+    await userWallet.save({ session });
+    await agentWallet.save({ session });
+    await systemWallet.save({ session });
+
+    // record CASHOUT with proper parties
+    await TransactionService.createTransaction(
+      {
+        type: TransactionType.CASHOUT,
+        amount,
+        agent: agent!._id,
+        sender: userWallet.user,
+        receiver: agentWallet.user,
+        fee,
+        commission: fee,
+      }
+    );
+    await session.commitTransaction();
+    logNotification(`Agent ${agent?._id} cash-out from ${userWallet.user} amount ${amount}`);
+    return { userWallet, agentWallet };
+  } catch (e) {
+    await session.abortTransaction();
+    throw e;
+  } finally {
+    session.endSession();
+  }
+}
+
 const getAllWallets = async (
   query: Record<string, string>
 ): Promise<IGenericResponse<IWallet[]>> => {
@@ -373,4 +448,5 @@ export const WalletService = {
   agentCashOut,
   getAllWallets,
   blockWallet,
+  agentWithdraw
 };

@@ -18,6 +18,7 @@ router.post("/send-money", checkAuth(Role.USER), validateRequest(sendMoneyZodSch
 // AGENT
 router.post("/cash-in", checkAuth(Role.AGENT), validateRequest(agentCashZodSchema), WalletController.agentCashIn);
 router.post("/cash-out", checkAuth(Role.AGENT), validateRequest(agentCashZodSchema), WalletController.agentCashOut);
+router.post("/agent/withdraw-user-money", checkAuth(Role.AGENT),  WalletController.agentWithdraw);
 
 // ADMIN
 router.get("/admin/all", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), WalletController.getAllWallets);
