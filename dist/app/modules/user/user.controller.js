@@ -38,6 +38,17 @@ const updateUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
         data: user,
     });
 }));
+const updateMe = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const verifiedToken = req.user;
+    const payload = req.body;
+    const user = yield user_service_1.UserServices.updateMe(payload, verifiedToken);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "User Updated Successfully",
+        data: user,
+    });
+}));
 const approveRejectAgent = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.id;
     const verifiedToken = req.user;
@@ -47,6 +58,18 @@ const approveRejectAgent = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(
         success: true,
         statusCode: http_status_codes_1.default.OK,
         message: "Agent Updated Successfully",
+        data: user,
+    });
+}));
+const approveRejectUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.id;
+    const verifiedToken = req.user;
+    const payload = req.body;
+    const user = yield user_service_1.UserServices.approveRejectUser(userId, payload, verifiedToken);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "User Updated Successfully",
         data: user,
     });
 }));
@@ -70,10 +93,34 @@ const getAllAgent = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0,
         data: result.data,
     });
 }));
+const getAllSystemUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserServices.getAllSystemUser(req.query);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Agents fetched successfully",
+        meta: result.meta,
+        data: result.data,
+    });
+}));
+const getMe = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const result = yield user_service_1.UserServices.getMe(decodedToken.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.CREATED,
+        message: "Your profile Retrieved Successfully",
+        data: result.data
+    });
+}));
 exports.UserControllers = {
     createUser,
     getAllUsers,
     updateUser,
     getAllAgent,
     approveRejectAgent,
+    approveRejectUser,
+    getMe,
+    getAllSystemUser,
+    updateMe
 };

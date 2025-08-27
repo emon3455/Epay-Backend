@@ -11,20 +11,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryBuilder = void 0;
 const constants_1 = require("../constants");
+const toDayStart = (iso) => new Date(`${iso}T00:00:00.000Z`);
+const toDayEnd = (iso) => new Date(`${iso}T23:59:59.999Z`);
 class QueryBuilder {
     constructor(modelQuery, query) {
         this.modelQuery = modelQuery;
         this.query = query;
     }
     filter() {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const filter = {};
+        const f = {};
+        // copy allowed query keys as exact matches
         for (const key in this.query) {
             if (!constants_1.excludeField.includes(key)) {
-                filter[key] = this.query[key];
+                f[key] = this.query[key];
             }
         }
-        this.modelQuery = this.modelQuery.find(filter);
+        // map startDate/endDate -> createdAt range
+        const { startDate, endDate } = this.query;
+        if (startDate || endDate) {
+            f.createdAt = Object.assign(Object.assign({}, (startDate ? { $gte: toDayStart(startDate) } : {})), (endDate ? { $lte: toDayEnd(endDate) } : {}));
+        }
+        this.modelQuery = this.modelQuery.find(f);
         return this;
     }
     search(searchableFields) {

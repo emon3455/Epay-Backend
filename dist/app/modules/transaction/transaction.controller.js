@@ -12,19 +12,39 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TransactionController = void 0;
+exports.TransactionController = exports.getMyTransactions = void 0;
 const catchAsync_1 = require("../../utils/catchAsync");
 const sendResponse_1 = require("../../utils/sendResponse");
 const transaction_service_1 = require("./transaction.service");
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
-const getMyTransactions = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.getMyTransactions = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const verifiedToken = req.user;
-    const result = yield transaction_service_1.TransactionService.getMyTransactions(verifiedToken);
+    // filters/pagination (all optional)
+    const { page = "1", limit = "20", role, // "SENT" | "RECEIVED" | "AGENT"
+    type, // e.g. "SENDMONEY" | "ADDMONEY" | ...
+    status, // if you track status
+    minAmount, maxAmount, dateFrom, // ISO date string (YYYY-MM-DD)
+    dateTo, // ISO date string (YYYY-MM-DD)
+    searchTerm, // matches counterparty name/email/phone
+     } = req.query;
+    const result = yield transaction_service_1.TransactionService.getMyTransactions(verifiedToken, {
+        page: Number(page) || 1,
+        limit: Number(limit) || 20,
+        role: role,
+        type,
+        status,
+        minAmount: minAmount ? Number(minAmount) : undefined,
+        maxAmount: maxAmount ? Number(maxAmount) : undefined,
+        dateFrom,
+        dateTo,
+        searchTerm,
+    });
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.OK,
-        message: "Transaction history fetched",
-        data: result,
+        message: "My Transaction history fetched",
+        data: result.data,
+        meta: result.meta,
     });
 }));
 const getAllTransactions = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -52,7 +72,7 @@ const getAgentCommission = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(
     });
 }));
 exports.TransactionController = {
-    getMyTransactions,
+    getMyTransactions: exports.getMyTransactions,
     getAllTransactions,
     getAgentCommission,
 };

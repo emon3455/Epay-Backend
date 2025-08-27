@@ -29,9 +29,9 @@ const getMyWallet = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0,
     });
 }));
 const addMoney = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const verifiedToken = req.user;
+    const id = req.body.id;
     const payload = req.body;
-    const result = yield wallet_service_1.WalletService.addMoney(verifiedToken, payload.amount);
+    const result = yield wallet_service_1.WalletService.addMoney(id, payload.amount);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.OK,
@@ -42,7 +42,7 @@ const addMoney = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, vo
 const withdrawMoney = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const verifiedToken = req.user;
     const payload = req.body;
-    const result = yield wallet_service_1.WalletService.withdrawMoney(verifiedToken, payload.amount);
+    const result = yield wallet_service_1.WalletService.withdrawMoney(verifiedToken, payload.amount, payload.agentId);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.OK,
@@ -76,8 +76,18 @@ const agentCashIn = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0,
 const agentCashOut = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const verifiedToken = req.user;
     const payload = req.body;
-    const { userId, amount } = payload;
-    const result = yield wallet_service_1.WalletService.agentCashOut(verifiedToken, userId, amount);
+    const result = yield wallet_service_1.WalletService.agentCashOut(verifiedToken, payload.amount);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Cash-out successful",
+        data: result,
+    });
+}));
+const agentWithdraw = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const verifiedToken = req.user;
+    const payload = req.body;
+    const result = yield wallet_service_1.WalletService.agentWithdraw(verifiedToken, payload.userId, payload.amount);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.OK,
@@ -113,4 +123,5 @@ exports.WalletController = {
     agentCashOut,
     getAllWallets,
     blockWallet,
+    agentWithdraw
 };

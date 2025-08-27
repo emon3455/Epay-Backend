@@ -25,6 +25,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthControllers = void 0;
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const passport_1 = __importDefault(require("passport"));
 const env_1 = require("../../config/env");
 const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
@@ -52,7 +53,7 @@ const credentialsLogin = (0, catchAsync_1.catchAsync)((req, res, next) => __awai
             data: {
                 accessToken: userTokens.accessToken,
                 refreshToken: userTokens.refreshToken,
-                user: rest
+                user: rest,
             },
         });
     }))(req, res, next);
@@ -75,12 +76,12 @@ const logout = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void
     res.clearCookie("accessToken", {
         httpOnly: true,
         secure: false,
-        sameSite: "lax"
+        sameSite: "lax",
     });
     res.clearCookie("refreshToken", {
         httpOnly: true,
         secure: false,
-        sameSite: "lax"
+        sameSite: "lax",
     });
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
@@ -89,15 +90,72 @@ const logout = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void
         data: null,
     });
 }));
-const resetPassword = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const changePassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const newPassword = req.body.newPassword;
     const oldPassword = req.body.oldPassword;
     const decodedToken = req.user;
-    yield auth_service_1.AuthServices.resetPassword(oldPassword, newPassword, decodedToken);
+    yield auth_service_1.AuthServices.changePassword(oldPassword, newPassword, decodedToken);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.OK,
         message: "Password Changed Successfully",
+        data: null,
+    });
+}));
+const resetPassword = (0, catchAsync_1.catchAsync)((req, res, _next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, token, password } = req.body || {};
+    if (!token)
+        throw new AppError_1.default(403, "No reset token provided");
+    if (!id)
+        throw new AppError_1.default(400, "User id is required");
+    if (!password || typeof password !== "string")
+        throw new AppError_1.default(400, "Password is required");
+    if (password.length < 8)
+        throw new AppError_1.default(400, "Password must be at least 8 characters");
+    // ✅ You signed with JWT_ACCESS_SECRET, so verify with the same
+    const secret = env_1.envVars.JWT_ACCESS_SECRET;
+    if (!secret)
+        throw new AppError_1.default(500, "Server misconfigured: JWT_ACCESS_SECRET missing");
+    let decoded;
+    try {
+        decoded = jsonwebtoken_1.default.verify(String(token).trim(), secret);
+    }
+    catch (err) {
+        if ((err === null || err === void 0 ? void 0 : err.name) === "TokenExpiredError") {
+            throw new AppError_1.default(401, "Reset link expired");
+        }
+        throw new AppError_1.default(401, "Invalid reset token");
+    }
+    // Ensure the link belongs to the same user
+    if (String(id) !== String(decoded.userId)) {
+        throw new AppError_1.default(401, "You can not reset your password");
+    }
+    yield auth_service_1.AuthServices.resetPassword({ id, password }, decoded);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Password Changed Successfully",
+        data: null,
+    });
+}));
+const setPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const { password } = req.body;
+    yield auth_service_1.AuthServices.setPassword(decodedToken.userId, password);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Password Changed Successfully",
+        data: null,
+    });
+}));
+const forgotPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    yield auth_service_1.AuthServices.forgotPassword(email);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Email Sent Successfully",
         data: null,
     });
 }));
@@ -119,5 +177,8 @@ exports.AuthControllers = {
     getNewAccessToken,
     logout,
     resetPassword,
-    googleCallbackController
+    googleCallbackController,
+    changePassword,
+    setPassword,
+    forgotPassword,
 };

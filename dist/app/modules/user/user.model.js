@@ -42,4 +42,7 @@ userSchema.virtual("wallet", {
 });
 userSchema.set("toObject", { virtuals: true });
 userSchema.set("toJSON", { virtuals: true });
+// or simple regex-friendly indexes:
+userSchema.index({ name: 1 });
+userSchema.index({ phone: 1 });
 exports.User = (0, mongoose_1.model)("User", userSchema);

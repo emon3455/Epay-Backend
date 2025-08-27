@@ -1,4 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.excludeField = void 0;
-exports.excludeField = ["searchTerm", "sort", "fields", "page", "limit"];
+exports.excludeField = [
+    "page",
+    "limit",
+    "fields",
+    "sort",
+    "sortBy",
+    "sortOrder",
+    "search",
+    "searchTerm",
+    "startDate",
+    "endDate",
+    "amountMin",
+    "amountMax",
+];

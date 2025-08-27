@@ -25,12 +25,18 @@ exports.updateWalletZodSchema = zod_1.default.object({
 });
 // ✅ Add Money
 exports.addMoneyZodSchema = zod_1.default.object({
+    id: zod_1.default.string().refine((val) => mongoose_1.default.Types.ObjectId.isValid(val), {
+        message: "Invalid user Id",
+    }),
     amount: zod_1.default
         .number({ invalid_type_error: "Amount must be a number" })
         .positive({ message: "Amount must be greater than zero" }),
 });
 // ✅ Withdraw Money
 exports.withdrawMoneyZodSchema = zod_1.default.object({
+    agentId: zod_1.default.string().refine((val) => mongoose_1.default.Types.ObjectId.isValid(val), {
+        message: "Invalid Agent Id",
+    }),
     amount: zod_1.default
         .number({ invalid_type_error: "Amount must be a number" })
         .positive({ message: "Amount must be greater than zero" }),

@@ -67,7 +67,30 @@ const updateUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, 
     });
     return newUpdatedUser;
 });
+const updateMe = (payload, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
+    const ifUserExist = yield user_model_1.User.findById(decodedToken === null || decodedToken === void 0 ? void 0 : decodedToken.userId);
+    if (!ifUserExist) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User Not Found");
+    }
+    if (payload.password) {
+        payload.password = yield bcryptjs_1.default.hash(payload.password, env_1.envVars.BCRYPT_SALT_ROUND);
+    }
+    const newUpdatedUser = yield user_model_1.User.findByIdAndUpdate(decodedToken === null || decodedToken === void 0 ? void 0 : decodedToken.userId, payload, {
+        new: true,
+        runValidators: true,
+    });
+    return newUpdatedUser;
+});
 const approveRejectAgent = (userId, payload, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
+    const agent = yield user_model_1.User.findById(userId);
+    if (!agent) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Agent Not Found");
+    }
+    agent.isActive = payload.isActive;
+    yield agent.save();
+    return agent;
+});
+const approveRejectUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
     const agent = yield user_model_1.User.findById(userId);
     if (!agent) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Agent Not Found");
@@ -108,10 +131,36 @@ const getAllAgent = (query) => __awaiter(void 0, void 0, void 0, function* () {
         meta,
     };
 });
+const getAllSystemUser = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    const modifiedQuery = Object.assign({}, query);
+    const baseQuery = user_model_1.User.find();
+    const queryBuilder = new QueryBuilder_1.QueryBuilder(baseQuery, modifiedQuery)
+        .filter()
+        .search(["name", "email", "phone"])
+        .sort()
+        .fields()
+        .paginate();
+    const allUsers = yield queryBuilder.build();
+    const meta = yield queryBuilder.getMeta();
+    return {
+        data: allUsers,
+        meta,
+    };
+});
+const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_model_1.User.findById(userId).select("-password");
+    return {
+        data: user
+    };
+});
 exports.UserServices = {
     createUser,
     getAllUsers,
     updateUser,
     getAllAgent,
     approveRejectAgent,
+    approveRejectUser,
+    getMe,
+    getAllSystemUser,
+    updateMe
 };

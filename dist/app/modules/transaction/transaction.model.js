@@ -12,4 +12,10 @@ const transactionSchema = new mongoose_1.Schema({
     fee: { type: Number, default: 0 },
     commission: { type: Number, default: 0 },
 }, { timestamps: true });
+transactionSchema.index({ createdAt: -1 });
+transactionSchema.index({ amount: 1 });
+transactionSchema.index({ type: 1 });
+transactionSchema.index({ sender: 1 });
+transactionSchema.index({ receiver: 1 });
+transactionSchema.index({ agent: 1 });
 exports.Transaction = (0, mongoose_1.model)("Transaction", transactionSchema);
