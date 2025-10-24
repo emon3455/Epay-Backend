@@ -45,11 +45,12 @@ const credentialsLogin = catchAsync(
   }
 );
 const getNewAccessToken = catchAsync(async (req: Request, res: Response) => {
-  const refreshToken = req.cookies.refreshToken;
+  // Support both cookies (web) and request body (mobile)
+  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
   if (!refreshToken) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      "No refresh token recieved from cookies"
+      "No refresh token received from cookies or request body"
     );
   }
   const tokenInfo = await AuthServices.getNewAccessToken(
